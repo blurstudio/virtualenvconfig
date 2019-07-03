@@ -15,6 +15,7 @@ setup(
     version=virtualenvconfig.__version__,
     description=r'Customize abi resolution for a given virtualenv setup.',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/blurstudio/{}'.format(name),
     download_url='https://github.com/blurstudio/{}/archive/master.zip'.format(name),
     license='GNU LGPLv3',
