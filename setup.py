@@ -1,11 +1,10 @@
 import os
 
 from setuptools import setup, find_packages
-from pillar.version import Version
+import virtualenvconfig
 
 name = 'virtualenvconfig'
 dirname = os.path.dirname(os.path.abspath(__file__))
-version = Version(dirname, name)
 
 # Get the long description from the README file.
 with open(os.path.join(dirname, 'README.md')) as fle:
@@ -13,11 +12,11 @@ with open(os.path.join(dirname, 'README.md')) as fle:
 
 setup(
     name=name,
-    version=version.get_version_string(),
-    description=r'{PACKAGE_DESCRIPTION}',
+    version=virtualenvconfig.__version__,
+    description=r'Customize abi resolution for a given virtualenv setup.',
     long_description=long_description,
-    url='https://gitlab.blur.com/pipeline/{}.git'.format(name),
-    download_url='https://gitlab.blur.com/pipeline/{}/repository/archive.tar.gz?ref=master'.format(name),
+    url='https://github.com/blurstudio/{}'.format(name),
+    download_url='https://github.com/blurstudio/{}/archive/master.zip'.format(name),
     license='GNU LGPLv3',
     classifiers=[
            'Development Status :: 3 - Alpha',
@@ -35,7 +34,6 @@ setup(
     include_package_data=True,
     author='Blur Studio',
     install_requires=[
-      'blur-pillar>=0.3.0',
       'gorilla',
     ],
     author_email='pipeline@blur.com'
