@@ -1,8 +1,8 @@
 # virtualenvconfig
 
 Modifies pip for a virtualenv to prefer a custom abi tag. This is used to make it easy to install
-compiled c++ packages like numpy and scipy that work for a given DCC.
-
+compiled c++ packages like numpy and scipy that work for a given Digital Content Creation software
+(DCC) like Maya, 3ds Max, Nuke, Houdini, etc.
 
 ## installing
 
