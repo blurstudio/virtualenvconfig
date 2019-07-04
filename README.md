@@ -47,6 +47,25 @@ This creates sitecustomize.py in the lib folder not the site-packages folder. Th
 the sitecustomize python script is only run when activating the virtualenv, not if the site-packages
 directory is used without activating the virtualenv.
 
+# Building custom abi wheels
+
+Now that we can force pip to prefer a given set of abi's, we need to be able to build pip packages for
+those custom abi's. This can be done by updating your pip package's setup.py file to use a the custom
+``bdist_wheel`` class ``abi_bdist_wheel``. This will add a required command line argument to setup.py
+``--abi [abi_name]`` allowing you to specify the abi used when building the wheel.
+
+**An example setup.py:**
+```py
+from setuptools import setup, find_packages
+import virtualenvconfig
+
+setup(
+	...,
+	# Force the build command to be passed the target abi as a command line argument
+	cmdclass={'bdist_wheel': virtualenvconfig.abi_bdist_wheel()},
+)
+```
+
 # Virtualenv setup at Blur
 
 Blur creates a virtualenv for each required Microsoft Visual C++ compiled version required for
