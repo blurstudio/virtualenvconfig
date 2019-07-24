@@ -4,7 +4,7 @@ import logging
 import importlib
 from distutils.sysconfig import get_python_lib
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 # Configure logging, Use a special logger so this doesn't enable debug printing
 # from pip and other modules.
@@ -173,18 +173,25 @@ else:
     filename = abi_filename()
     if is_venv() and os.path.exists(filename):
         abi_overrides = [v.strip() for v in open(filename).read().strip().split('\n')]
-        abi_overrides = list(reversed(abi_overrides))
 
         logger.debug('Inserting pip abi "{}"'.format(', '.join(abi_overrides)))
         import gorilla
         import pip._internal.index
         import pip._internal.pep425tags
-        import pip._internal.models.target_python
 
-        settings = gorilla.Settings(allow_hit=True)
-        @gorilla.patch(pip._internal.index, settings=settings)
-        @gorilla.patch(pip._internal.pep425tags, settings=settings)
-        @gorilla.patch(pip._internal.models.target_python, settings=settings)
+        destinations = [
+            # Note: get_supported was removed from index in pip 19.2
+            pip._internal.index,
+            pip._internal.pep425tags
+        ]
+
+        try:
+            # target_python was added in pip 19.2
+            import pip._internal.models.target_python
+            destinations.append(pip._internal.models.target_python)
+        except ImportError:
+            pass
+
         def get_supported(
             versions=None,
             noarch=False,
@@ -199,7 +206,7 @@ else:
             rows = original(versions=versions, noarch=noarch, platform=platform, impl=impl, abi=abi)
 
             # Insert our abi at the top of the stack. preserving the order specified in the file
-            for abi_override in abi_overrides:
+            for abi_override in reversed(abi_overrides):
                 row = (rows[0][0], abi_override, rows[0][2])
                 rows.insert(0, row)
             for row in rows:
@@ -207,7 +214,7 @@ else:
 
             return rows
 
-        mod = importlib.import_module(__name__)
-        patches = gorilla.find_patches([mod])
-        for patch in patches:
+        settings = gorilla.Settings(allow_hit=True)
+        for destination in destinations:
+            patch = gorilla.Patch(destination, 'get_supported', get_supported, settings=settings)
             gorilla.apply(patch)

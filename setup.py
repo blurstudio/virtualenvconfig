@@ -36,6 +36,7 @@ setup(
     author='Blur Studio',
     install_requires=[
       'gorilla',
+      'pip>=19.1.1',
     ],
     author_email='pipeline@blur.com'
 )
