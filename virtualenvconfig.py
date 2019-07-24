@@ -4,7 +4,7 @@ import logging
 import importlib
 from distutils.sysconfig import get_python_lib
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 # Configure logging, Use a special logger so this doesn't enable debug printing
 # from pip and other modules.
@@ -173,15 +173,18 @@ else:
     filename = abi_filename()
     if is_venv() and os.path.exists(filename):
         abi_overrides = [v.strip() for v in open(filename).read().strip().split('\n')]
+        abi_overrides = list(reversed(abi_overrides))
 
         logger.debug('Inserting pip abi "{}"'.format(', '.join(abi_overrides)))
         import gorilla
         import pip._internal.index
         import pip._internal.pep425tags
+        import pip._internal.models.target_python
 
         settings = gorilla.Settings(allow_hit=True)
         @gorilla.patch(pip._internal.index, settings=settings)
         @gorilla.patch(pip._internal.pep425tags, settings=settings)
+        @gorilla.patch(pip._internal.models.target_python, settings=settings)
         def get_supported(
             versions=None,
             noarch=False,
@@ -196,8 +199,7 @@ else:
             rows = original(versions=versions, noarch=noarch, platform=platform, impl=impl, abi=abi)
 
             # Insert our abi at the top of the stack. preserving the order specified in the file
-            for abi_override in reversed(abi_overrides):
-                print 'abi_override', abi_override
+            for abi_override in abi_overrides:
                 row = (rows[0][0], abi_override, rows[0][2])
                 rows.insert(0, row)
             for row in rows:
