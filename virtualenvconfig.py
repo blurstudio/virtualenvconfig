@@ -76,41 +76,41 @@ def install_sitecustomize(overwrite):
 
 
 def abi_bdist_wheel():
-	""" Force setup.py to require the --abi argument.
+    """ Force setup.py to require the --abi argument.
 
-	Example setup.py:
-		import virtualenvconfig
-		setup(
-			...,
-			cmdclass={'bdist_wheel': virtualenvconfig.abi_bdist_wheel()},
-		)
+    Example setup.py:
+        import virtualenvconfig
+        setup(
+            ...,
+            cmdclass={'bdist_wheel': virtualenvconfig.abi_bdist_wheel()},
+        )
 
-	Returns:
-		abi_bdist_wheel class that adds a required --abi command line argument. This
-		argument forces the abi tag for wheel builds to this value.
-	"""
-	from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
-	class abi_bdist_wheel(_bdist_wheel):
-		#https://github.com/Yelp/dumb-init/blob/48db0c0d0ecb4598d1a6400710445b85d67616bf/setup.py#L11-L27
-		# Copy user_options from _bdist_wheel and add our argument to the top
-		user_options = _bdist_wheel.user_options[:]
-		user_options.insert(0, ('abi=', 'a', 'Custom abi tag, required.'))
+    Returns:
+        abi_bdist_wheel class that adds a required --abi command line argument. This
+        argument forces the abi tag for wheel builds to this value.
+    """
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+    class abi_bdist_wheel(_bdist_wheel):
+        #https://github.com/Yelp/dumb-init/blob/48db0c0d0ecb4598d1a6400710445b85d67616bf/setup.py#L11-L27
+        # Copy user_options from _bdist_wheel and add our argument to the top
+        user_options = _bdist_wheel.user_options[:]
+        user_options.insert(0, ('abi=', 'a', 'Custom abi tag, required.'))
 
-		def finalize_options(self):
-			_bdist_wheel.finalize_options(self)
-			# Mark us as not a pure python package
-			self.root_is_pure = False
-			if self.abi is None:
-				raise ValueError('Parameter --abi must be passed to build this wheel.')
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            # Mark us as not a pure python package
+            self.root_is_pure = False
+            if self.abi is None:
+                raise ValueError('Parameter --abi must be passed to build this wheel.')
 
-		def initialize_options(self):
-			_bdist_wheel.initialize_options(self)
-			self.abi = None
+        def initialize_options(self):
+            _bdist_wheel.initialize_options(self)
+            self.abi = None
 
-		def get_tag(self):
-			python, abi, plat = _bdist_wheel.get_tag(self)
-			return python, self.abi, plat
-	return abi_bdist_wheel
+        def get_tag(self):
+            python, abi, plat = _bdist_wheel.get_tag(self)
+            return python, self.abi, plat
+    return abi_bdist_wheel
 
 def parse_arguments():
     from argparse import ArgumentParser
