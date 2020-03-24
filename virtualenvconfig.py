@@ -1,10 +1,10 @@
 import os
 import sys
 import logging
-import importlib
+import packaging.version
 from distutils.sysconfig import get_python_lib
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 # Configure logging, Use a special logger so this doesn't enable debug printing
 # from pip and other modules.
@@ -196,27 +196,59 @@ else:
         except ImportError:
             pass
 
-        def get_supported(
-            versions=None, noarch=False, platform=None, impl=None, abi=None
-        ):
-            logger.debug("get_supported called")
-            # We're overwriting an existing function here,
-            # preserve its original behavior.
-            original = gorilla.get_original_attribute(
-                pip._internal.pep425tags, "get_supported"
-            )
-            rows = original(
-                versions=versions, noarch=noarch, platform=platform, impl=impl, abi=abi
-            )
+        pip_version = packaging.version.Version(pip.__version__)
+        # The arguments/return of get_supported were changed in pip 20
+        if pip_version.release[0] < 20:
 
-            # Insert our abi at the top of the stack. preserving the order specified in the file
-            for abi_override in reversed(abi_overrides):
-                row = (rows[0][0], abi_override, rows[0][2])
-                rows.insert(0, row)
-            for row in rows:
-                logger.debug("  {}".format(row))
+            def get_supported(
+                versions=None, noarch=False, platform=None, impl=None, abi=None
+            ):
+                logger.debug("get_supported called pip {}".format(pip.__version__))
+                # We're overwriting an existing function here,
+                # preserve its original behavior.
+                original = gorilla.get_original_attribute(
+                    pip._internal.pep425tags, "get_supported"
+                )
+                rows = original(
+                    versions=versions,
+                    noarch=noarch,
+                    platform=platform,
+                    impl=impl,
+                    abi=abi,
+                )
 
-            return rows
+                # Insert our abi at the top of the stack. preserving the order specified in the file
+                for abi_override in reversed(abi_overrides):
+                    row = (rows[0][0], abi_override, rows[0][2])
+                    rows.insert(0, row)
+                for row in rows:
+                    logger.debug("  {}".format(row))
+
+                return rows
+
+        else:  # pip 20.0 +
+            from pip._vendor.packaging import tags
+
+            def get_supported(version=None, platform=None, impl=None, abi=None):
+                logger.debug("get_supported called pip {}".format(pip.__version__))
+                # We're overwriting an existing function here,
+                # preserve its original behavior.
+                original = gorilla.get_original_attribute(
+                    pip._internal.pep425tags, "get_supported"
+                )
+                rows = original(version=version, platform=platform, impl=impl, abi=abi)
+
+                # Insert our abi at the top of the stack. preserving the order specified in the file
+                base_tag = rows[0]
+                for abi_override in reversed(abi_overrides):
+                    row = tags.Tag(
+                        base_tag.interpreter, abi_override, base_tag.platform
+                    )
+                    rows.insert(0, row)
+                for row in rows:
+                    logger.debug("  {}".format(row))
+
+                return rows
 
         settings = gorilla.Settings(allow_hit=True)
         for destination in destinations:
