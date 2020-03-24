@@ -3,7 +3,7 @@ import sys
 import logging
 from distutils.sysconfig import get_python_lib
 
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
 # Configure logging, Use a special logger so this doesn't enable debug printing
 # from pip and other modules.
