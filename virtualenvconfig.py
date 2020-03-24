@@ -1,7 +1,6 @@
 import os
 import sys
 import logging
-import packaging.version
 from distutils.sysconfig import get_python_lib
 
 __version__ = "0.0.7"
@@ -196,9 +195,9 @@ else:
         except ImportError:
             pass
 
-        pip_version = packaging.version.Version(pip.__version__)
+        pip_version = int(pip.__version__.split('.', 1)[0])
         # The arguments/return of get_supported were changed in pip 20
-        if pip_version.release[0] < 20:
+        if pip_version < 20:
 
             def get_supported(
                 versions=None, noarch=False, platform=None, impl=None, abi=None
